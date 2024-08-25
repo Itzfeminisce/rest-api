@@ -6,7 +6,7 @@ const port = 3000;
 
 app.use(bodyParser.json());
 
-app.post('/api/data', (req, res) => {
+app.post('/data', (req, res) => {
     const { status, userId, emailId, collegeRollNumber, numbersArray, alphabetsArray } = req.body;
 
     const response = {
