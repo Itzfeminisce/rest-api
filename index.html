@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABCD123</title> <!-- Your Roll Number as the title -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .error {
+            color: red;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .dropdown, .submit-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>JSON Validator and API Caller</h1>
+
+    <div>
+        <label for="json-input">Enter JSON:</label><br>
+        <textarea id="json-input" rows="5" cols="50"></textarea><br>
+        <button id="submit-btn" class="submit-btn">Submit</button>
+        <p id="error-message" class="error"></p>
+    </div>
+
+    <div id="dropdown-container" class="dropdown" style="display:none;">
+        <label for="filter-options">Select filters:</label><br>
+        <select id="filter-options" multiple>
+            <option value="alphabets">Alphabets</option>
+            <option value="numbers">Numbers</option>
+            <option value="highest_lowercase_alphabet">Highest Lowercase Alphabet</option>
+        </select>
+    </div>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        document.getElementById('submit-btn').addEventListener('click', function() {
+            const jsonInput = document.getElementById('json-input').value;
+            const errorMessage = document.getElementById('error-message');
+            const resultDiv = document.getElementById('result');
+            const dropdownContainer = document.getElementById('dropdown-container');
+            
+            // Reset error message and result
+            errorMessage.textContent = '';
+            resultDiv.innerHTML = '';
+
+            // Validate JSON
+            let data;
+            try {
+                data = JSON.parse(jsonInput);
+                if (!data || !Array.isArray(data.data)) {
+                    throw new Error("Invalid JSON format. Ensure 'data' is an array.");
+                }
+            } catch (error) {
+                errorMessage.textContent = error.message;
+                return;
+            }
+
+            // Call the API on Vercel
+            fetch('/data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(apiResponse => {
+                // Show the dropdown and store the API response
+                dropdownContainer.style.display = 'block';
+                window.apiResponse = apiResponse;
+            })
+            .catch(error => {
+                errorMessage.textContent = "Error calling API: " + error.message;
+            });
+        });
+
+        // Handle filter selection
+        document.getElementById('filter-options').addEventListener('change', function() {
+            const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
+            const apiResponse = window.apiResponse || {};
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.innerHTML = '';  // Clear previous result
+
+            // Build filtered response
+            if (selectedOptions.includes('alphabets') && apiResponse.alphabets) {
+                resultDiv.innerHTML += <p>Alphabets: ${apiResponse.alphabets.join(', ')}</p>;
+            }
+            if (selectedOptions.includes('numbers') && apiResponse.numbers) {
+                resultDiv.innerHTML += <p>Numbers: ${apiResponse.numbers.join(', ')}</p>;
+            }
+            if (selectedOptions.includes('highest_lowercase_alphabet') && apiResponse.highest_lowercase_alphabet) {
+                resultDiv.innerHTML += <p>Highest Lowercase Alphabet: ${apiResponse.highest_lowercase_alphabet.join(', ')}</p>;
